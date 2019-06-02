@@ -1,3 +1,4 @@
 pkg
 src/gopkg.in
 src/github.com
+config.yaml

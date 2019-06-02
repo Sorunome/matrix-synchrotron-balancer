@@ -14,6 +14,7 @@ type SynchrotronConfig struct {
 type BalancerConfig struct {
 	RelocateThreashold float64 `yaml:"relocate_threashold"`
 	RelocateCounterThreashold int `yaml:"relocate_counter_threashold"`
+	RelocateMinCpu float64 `yaml:"relocate_min_cpu"`
 	Interval int `yaml:"interval"`
 }
 
@@ -41,6 +42,7 @@ func defaultConfig() *Config {
 			RelocateThreashold: 3.0,
 			RelocateCounterThreashold: 5,
 			Interval: 60,
+			RelocateMinCpu: 10.0
 		},
 	}
 }

@@ -19,7 +19,7 @@ type Synchrotron struct {
 	PIDFile string
 	Load float64
 	Users int
-	RelocateCounter int
+	RelocateCounter float64
 }
 
 var rMatchToken *regexp.Regexp
@@ -27,6 +27,7 @@ var tokenMxidCache map[string]string
 var synchrotronCache map[string]int
 var numSynchrotrons = 0
 var synchrotrons = []*Synchrotron{}
+var totalUsers = 0
 
 func getSynchrotron(mxid string) int {
 	if val, ok := synchrotronCache[mxid]; ok {
@@ -34,7 +35,10 @@ func getSynchrotron(mxid string) int {
 			return val
 		}
 		// we need to relocate the user to another synchrotron
+		users := synchrotrons[val].Users
 		synchrotrons[val].Users--
+		// estimate to how good our relocating is
+		synchrotrons[val].RelocateCounter -=  1 - (users / totalUsers)
 	}
 	minLoad := 1000.0
 	i := 0
@@ -114,8 +118,11 @@ func handleConnection(conn net.Conn) {
 		return
 	}
 	
+	totalUsers++
+	
 	var pipe = func(src net.Conn, dst net.Conn) {
 		defer func() {
+			totalUsers--
 			conn.Close()
 			rconn.Close()
 		}()
@@ -165,7 +172,7 @@ func updateLoads() {
 	}
 	relocateLoad := minLoad * config.Get().Balancer.RelocateThreashold
 	for _, synch := range synchrotrons {
-		if synch.Load >= relocateLoad && synch.Users > 1 {
+		if synch.Load >= relocateLoad && synch.Users > 1 && sync.Load > config.Get().Balancer.RelocateMinCpu {
 			synch.RelocateCounter++
 		} else if synch.RelocateCounter > 0 {
 			synch.RelocateCounter--
