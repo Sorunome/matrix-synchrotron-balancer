@@ -41,7 +41,7 @@ func defaultConfig() *Config {
 		Balancer: &BalancerConfig{
 			RelocateThreashold: 3.0,
 			RelocateCounterThreashold: 5.0,
-			Interval: 60,
+			Interval: 2,
 			RelocateMinCpu: 10.0,
 		},
 	}
