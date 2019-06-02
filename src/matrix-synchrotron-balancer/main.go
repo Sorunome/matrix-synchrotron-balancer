@@ -38,7 +38,7 @@ func getSynchrotron(mxid string) int {
 		users := synchrotrons[val].Users
 		synchrotrons[val].Users--
 		// estimate to how good our relocating is
-		synchrotrons[val].RelocateCounter -=  1 - (users / totalUsers)
+		synchrotrons[val].RelocateCounter -=  1 - (float64(users) / float64(totalUsers))
 	}
 	minLoad := 1000.0
 	i := 0
@@ -172,7 +172,7 @@ func updateLoads() {
 	}
 	relocateLoad := minLoad * config.Get().Balancer.RelocateThreashold
 	for _, synch := range synchrotrons {
-		if synch.Load >= relocateLoad && synch.Users > 1 && sync.Load > config.Get().Balancer.RelocateMinCpu {
+		if synch.Load >= relocateLoad && synch.Users > 1 && synch.Load > config.Get().Balancer.RelocateMinCpu {
 			synch.RelocateCounter++
 		} else if synch.RelocateCounter > 0 {
 			synch.RelocateCounter--
