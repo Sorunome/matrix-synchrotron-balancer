@@ -15,6 +15,7 @@ type BalancerConfig struct {
 	RelocateThreashold float64 `yaml:"relocate_threashold"`
 	RelocateCounterThreashold float64 `yaml:"relocate_counter_threashold"`
 	RelocateMinCpu float64 `yaml:"relocate_min_cpu"`
+	RelocateCooldown float64 `yaml:"relocate_cooldown"`
 	Interval int `yaml:"interval"`
 }
 
@@ -40,7 +41,8 @@ func defaultConfig() *Config {
 		},
 		Balancer: &BalancerConfig{
 			RelocateThreashold: 3.0,
-			RelocateCounterThreashold: 5.0,
+			RelocateCounterThreashold: 4.5,
+			RelocateCooldown: 0.2,
 			Interval: 2,
 			RelocateMinCpu: 10.0,
 		},

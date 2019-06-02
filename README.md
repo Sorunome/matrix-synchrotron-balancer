@@ -27,3 +27,4 @@ An example file is in `config.sample.yaml`, copy that one to `config.yaml`. Edit
    - `relocate_min_cpu`: (float) only relocate users if the synchrotron has a CPU usage of at least this much
    - `relocate_threashold`: (float) if the maximum synchrotron load is this much larger than the minimum one, start relocating
    - `relocate_counter_threashold`: (float) to limit sudden bursts to relocate stuff unneededly, relocate only after this many balancer ticks have progressed
+   - `relocate_cooldown`: (float) how much the relocate counter is decreased per relocated user

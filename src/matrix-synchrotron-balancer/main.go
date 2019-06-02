@@ -35,10 +35,9 @@ func getSynchrotron(mxid string) int {
 			return val
 		}
 		// we need to relocate the user to another synchrotron
-		users := synchrotrons[val].Users
 		synchrotrons[val].Users--
 		// estimate to how good our relocating is
-		synchrotrons[val].RelocateCounter -=  1 - (float64(users) / float64(totalUsers))
+		synchrotrons[val].RelocateCounter -=  config.Get().Balancer.RelocateCooldown
 	}
 	minLoad := 1000.0
 	i := 0
