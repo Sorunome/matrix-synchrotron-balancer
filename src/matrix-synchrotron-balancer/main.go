@@ -7,23 +7,49 @@ import (
 	"net/http"
 	"io/ioutil"
 	"encoding/json"
+	"matrix-synchrotron-balancer/config"
 )
 
+type Synchrotron struct {
+	Url string
+	PIDFile string
+	Load int
+}
+
 var rMatchToken *regexp.Regexp
-var rMatchUserId *regexp.Regexp
 var tokenMxidCache map[string]string
+var synchrotronCache map[string]int
+var numSynchrotrons = 0
+var synchrotrons = []*Synchrotron{}
+
+func getSynchrotron(mxid string) int {
+	if val, ok := synchrotronCache[mxid]; ok {
+		return val
+	}
+	minLoad := 99999999
+	synchIndex := 0
+	for i, synch := range synchrotrons {
+		if synch.Load < minLoad {
+			minLoad = synch.Load
+			synchIndex = i
+		}
+	}
+	synchrotronCache[mxid] = synchIndex
+	return synchIndex
+}
 
 func getMxid(token []byte) string {
 	sToken := string(token)
 	if val, ok := tokenMxidCache[sToken]; ok {
-		log.Print("Using cache")
 		return val
 	}
-	req, err := http.NewRequest("GET", "http://localhost:8008/_matrix/client/r0/account/whoami", nil)
+	log.Print("New first authorization token")
+	req, err := http.NewRequest("GET", config.Get().HomeserverUrl + "/_matrix/client/r0/account/whoami", nil)
 	req.Header.Add("Authorization", "Bearer " + sToken)
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
+		log.Print("Error fetching user id from home server: ", err)
 		tokenMxidCache[sToken] = ""
 		return ""
 	}
@@ -37,8 +63,8 @@ func getMxid(token []byte) string {
 		tokenMxidCache[sToken] = ""
 		return ""
 	}
-	log.Print(m)
 	userId := m.UserId
+	log.Print("New user id: ", userId)
 	tokenMxidCache[sToken] = userId
 	return userId
 }
@@ -63,9 +89,9 @@ func handleConnection(conn net.Conn) {
 		}
 		mxid = getMxid(token)
 	}
-	log.Print(mxid)
+	synchIndex := getSynchrotron(mxid)
 	
-	rconn, err = net.Dial("tcp", "localhost:8008")
+	rconn, err = net.Dial("tcp", synchrotrons[synchIndex].Url)
 	if err != nil {
 		log.Print("Failed to connect to remote")
 		return
@@ -105,13 +131,20 @@ func main() {
 	if err != nil {
 		log.Panic("Invalid regex", err)
 	}
-	rMatchUserId, err = regexp.Compile("(?i)user_id\\s*=\\s*(@[^:]+:\\S+)")
-	if err != nil {
-		log.Panic("Invalid regex", err)
-	}
 	tokenMxidCache = make(map[string]string)
+	synchrotronCache = make(map[string]int)
 
-	ln, err := net.Listen("tcp", "localhost:8083")
+	for _, synch := range config.Get().Synchrotrons {
+		synchrotrons = append(synchrotrons, &Synchrotron{
+			Url: synch.Url,
+			PIDFile: synch.PIDFile,
+			Load: 0,
+		})
+	}
+	numSynchrotrons = len(synchrotrons)
+	log.Print("Configured synchrotrons: ", numSynchrotrons)
+
+	ln, err := net.Listen("tcp", config.Get().Listener)
 	if err != nil {
 		log.Panic("Error starting up:", err)
 	}
@@ -121,7 +154,6 @@ func main() {
 			log.Print("Error accepting connection")
 			continue
 		}
-		log.Print("accepting new connection")
 		go handleConnection(conn)
 	}
 }
