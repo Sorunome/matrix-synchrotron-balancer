@@ -8,12 +8,18 @@ import (
 	"io/ioutil"
 	"encoding/json"
 	"matrix-synchrotron-balancer/config"
+	"bytes"
+	"strconv"
+	"time"
+	"github.com/struCoder/pidusage"
 )
 
 type Synchrotron struct {
 	Url string
 	PIDFile string
-	Load int
+	Load float64
+	Users int
+	RelocateCounter int
 }
 
 var rMatchToken *regexp.Regexp
@@ -24,18 +30,23 @@ var synchrotrons = []*Synchrotron{}
 
 func getSynchrotron(mxid string) int {
 	if val, ok := synchrotronCache[mxid]; ok {
-		return val
+		if synchrotrons[val].RelocateCounter < config.Get().Balancer.RelocateCounterThreashold {
+			return val
+		}
+		// we need to relocate the user to another synchrotron
+		synchrotrons[val].Users--
 	}
-	minLoad := 99999999
-	synchIndex := 0
-	for i, synch := range synchrotrons {
+	minLoad := 10.0
+	i := 0
+	for ii, synch := range synchrotrons {
 		if synch.Load < minLoad {
 			minLoad = synch.Load
-			synchIndex = i
+			i = ii
 		}
 	}
-	synchrotronCache[mxid] = synchIndex
-	return synchIndex
+	synchrotronCache[mxid] = i
+	synchrotrons[i].Users++
+	return i
 }
 
 func getMxid(token []byte) string {
@@ -125,6 +136,53 @@ func handleConnection(conn net.Conn) {
 	go pipe(rconn, conn)
 }
 
+func updateLoads() {
+	minLoad := 10.0
+	maxLoad := 0.0
+	for i, synch := range synchrotrons {
+		f, err := ioutil.ReadFile(synch.PIDFile)
+		if err != nil {
+			log.Print("Error fetching PID file: ", err)
+			continue
+		}
+		pid, err := strconv.Atoi(string(bytes.TrimSpace(f)))
+		if err != nil {
+			log.Print("Malformed PID file: ", err)
+			continue
+		}
+		sysInfo, err := pidusage.GetStat(pid)
+		if err != nil {
+			log.Print("Error fetching synchrotron stats: ", err)
+		}
+		synch.Load = sysInfo.CPU
+		if synch.Load > maxLoad {
+			maxLoad = synch.Load
+		}
+		if synch.Load < minLoad {
+			minLoad = synch.Load
+		}
+		log.Print("Synchrotron ", i, " Users:", synch.Users, " Load:", synch.Load)
+	}
+	relocateLoad := minLoad * config.Get().Balancer.RelocateThreashold
+	for _, synch := range synchrotrons {
+		if synch.Load >= relocateLoad && synch.Users > 1 {
+			synch.RelocateCounter++
+		} else if synch.RelocateCounter > 0 {
+			synch.RelocateCounter--
+		}
+		if synch.RelocateCounter < 0 {
+			synch.RelocateCounter = 0
+		}
+	}
+}
+
+func startUpdateLoads() {
+	for {
+		go updateLoads()
+		time.Sleep(time.Duration(config.Get().Balancer.Interval) * time.Second)
+	}
+}
+
 func main() {
 	var err error
 	rMatchToken, err = regexp.Compile("(?i)(?:Authorization:\\s*\\S*\\s*(\\S*)|[&?]token=([^&?\\s]+))")
@@ -139,10 +197,14 @@ func main() {
 			Url: synch.Url,
 			PIDFile: synch.PIDFile,
 			Load: 0,
+			Users: 0,
+			RelocateCounter: 0,
 		})
 	}
 	numSynchrotrons = len(synchrotrons)
 	log.Print("Configured synchrotrons: ", numSynchrotrons)
+
+	go startUpdateLoads()
 
 	ln, err := net.Listen("tcp", config.Get().Listener)
 	if err != nil {

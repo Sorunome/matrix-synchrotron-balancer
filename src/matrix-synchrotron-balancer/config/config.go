@@ -2,24 +2,30 @@ package config
 
 import (
 	"log"
-	"os"
 	"io/ioutil"
-	"encoding/json"
+	"gopkg.in/yaml.v2"
 )
 
 type SynchrotronConfig struct {
-	Url string `json:"url"`
-	PIDFile string `json:"pid_file"`
+	Url string `yaml:"url"`
+	PIDFile string `yaml:"pid_file"`
+}
+
+type BalancerConfig struct {
+	RelocateThreashold float64 `yaml:"relocate_threashold"`
+	RelocateCounterThreashold int `yaml:"relocate_counter_threashold"`
+	Interval int `yaml:"interval"`
 }
 
 type Config struct {
-	HomeserverUrl string `json:"homeserver_url"`
-	Listener string `json:"listener"`
-	Synchrotrons []*SynchrotronConfig `json:"synchrotrons"`
+	HomeserverUrl string `yaml:"homeserver_url"`
+	Listener string `yaml:"listener"`
+	Synchrotrons []*SynchrotronConfig `yaml:"synchrotrons"`
+	Balancer *BalancerConfig `yaml:"balancer"`
 }
 
 var instance *Config = nil
-var Path = "config.json"
+var Path = "config.yaml"
 
 func defaultConfig() *Config {
 	return &Config{
@@ -31,23 +37,22 @@ func defaultConfig() *Config {
 				PIDFile: "/tmp/pid",
 			},
 		},
+		Balancer: &BalancerConfig{
+			RelocateThreashold: 3.0,
+			RelocateCounterThreashold: 5,
+			Interval: 60,
+		},
 	}
 }
 
 func loadConfig() error {
 	c := defaultConfig()
 
-	f, err := os.Open(Path)
+	buffer, err := ioutil.ReadFile(Path)
 	if err != nil {
 		return err
 	}
-	defer f.Close()
-
-	buffer, err := ioutil.ReadAll(f)
-	if err != nil {
-		return err
-	}
-	err = json.Unmarshal(buffer, &c)
+	err = yaml.Unmarshal(buffer, &c)
 	if err != nil {
 		return err
 	}
