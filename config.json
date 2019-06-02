@@ -1,0 +1,8 @@
+{
+	"synchrotrons": [
+		{
+			"url": "localhost:8008",
+			"pid_file": "/tmp/blah"
+		}
+	]
+}
