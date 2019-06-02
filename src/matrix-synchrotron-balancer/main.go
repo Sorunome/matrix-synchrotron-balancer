@@ -178,8 +178,8 @@ func updateLoads() {
 
 func startUpdateLoads() {
 	for {
-		go updateLoads()
 		time.Sleep(time.Duration(config.Get().Balancer.Interval) * time.Second)
+		go updateLoads()
 	}
 }
 
@@ -205,6 +205,7 @@ func main() {
 	log.Print("Configured synchrotrons: ", numSynchrotrons)
 
 	go startUpdateLoads()
+	updateLoads()
 
 	ln, err := net.Listen("tcp", config.Get().Listener)
 	if err != nil {
