@@ -36,7 +36,7 @@ func getSynchrotron(mxid string) int {
 		// we need to relocate the user to another synchrotron
 		synchrotrons[val].Users--
 	}
-	minLoad := 10.0
+	minLoad := 1000.0
 	i := 0
 	for ii, synch := range synchrotrons {
 		if synch.Load < minLoad {
@@ -137,7 +137,7 @@ func handleConnection(conn net.Conn) {
 }
 
 func updateLoads() {
-	minLoad := 10.0
+	minLoad := 1000.0
 	maxLoad := 0.0
 	for i, synch := range synchrotrons {
 		f, err := ioutil.ReadFile(synch.PIDFile)
