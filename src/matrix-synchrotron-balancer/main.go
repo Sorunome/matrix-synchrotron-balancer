@@ -91,6 +91,7 @@ func handleConnection(conn net.Conn) {
 	buff := make([]byte, 65535)
 	n, err := conn.Read(buff)
 	if err != nil {
+		conn.Close()
 		return
 	}
 	b := buff[:n]
@@ -108,12 +109,16 @@ func handleConnection(conn net.Conn) {
 	rconn, err = net.Dial("tcp", synchrotrons[synchIndex].Address)
 	if err != nil {
 		log.Print("Failed to connect to remote")
+		conn.Close()
+		rconn.Close()
 		return
 	}
 	
 	// don't forget to send the first chunk!
 	_, err = rconn.Write(b)
 	if err != nil {
+		conn.Close()
+		rconn.Close()
 		return
 	}
 	
