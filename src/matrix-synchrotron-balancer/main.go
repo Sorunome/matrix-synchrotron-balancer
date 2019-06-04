@@ -31,7 +31,7 @@ var totalUsers = 0
 
 func getSynchrotron(mxid string) int {
 	if val, ok := synchrotronCache[mxid]; ok {
-		if synchrotrons[val].RelocateCounter < config.Get().Balancer.RelocateCounterThreashold {
+		if synchrotrons[val].RelocateCounter < config.Get().Balancer.RelocateCounterThreshold {
 			return val
 		}
 		// we need to relocate the user to another synchrotron
@@ -169,7 +169,7 @@ func updateLoads() {
 		}
 		log.Print("Synchrotron ", i, " Users:", synch.Users, " Load:", synch.Load)
 	}
-	relocateLoad := minLoad * config.Get().Balancer.RelocateThreashold
+	relocateLoad := minLoad * config.Get().Balancer.RelocateThreshold
 	for _, synch := range synchrotrons {
 		if synch.Load >= relocateLoad && synch.Users > 1 && synch.Load > config.Get().Balancer.RelocateMinCpu {
 			synch.RelocateCounter++
