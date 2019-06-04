@@ -20,7 +20,7 @@ An example file is in `config.sample.yaml`, copy that one to `config.yaml`. Edit
  - `homeserver_url`: (string) url of your homeserver
  - `listener`: (string) listener where the load balancer listens to (`host:port`)
  - `synchrotrons`: (array) the defined synchrotrons
-   - `url`: (string) where the synchrotron listens to (`host:port`, WITHOUT `http://`)
+   - `address`: (string) address where the synchrotron listens to (`host:port`, WITHOUT `http://`)
    - `pid_file`: (string) the full path of the PID file of the synchrotron
  - `balancer`: Balancer configs
    - `interval`: (int) interval, in seconds, how often the balancer does logic

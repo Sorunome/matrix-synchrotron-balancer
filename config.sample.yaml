@@ -1,9 +1,9 @@
 homeserver_url: http://localhost:8008 # homeserver URL for the whoami request
 listener: localhost:8083 # host:port to listen to
 synchrotrons: # array of synchrotrons to handle
-  - url: localhost:8085 # host:port of where the synchrotron listens to
+  - address: localhost:8085 # host:port of where the synchrotron listens to
     pid_file: /tmp/synapse-synchrotron.pid # pid file of the synchrotron
-  - url: localhost:8086
+  - address: localhost:8086
     pid_file: /tmp/synapse-synchrotron2.pid
 balancer:
   interval: 2 # interval, in seconds, where it re-checks the load of the synchrotrons

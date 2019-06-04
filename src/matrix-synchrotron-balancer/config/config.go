@@ -7,7 +7,7 @@ import (
 )
 
 type SynchrotronConfig struct {
-	Url string `yaml:"url"`
+	Address string `yaml:"address"`
 	PIDFile string `yaml:"pid_file"`
 }
 
@@ -33,12 +33,7 @@ func defaultConfig() *Config {
 	return &Config{
 		HomeserverUrl: "http://localhost:8008",
 		Listener: "localhost:8083",
-		Synchrotrons: []*SynchrotronConfig{
-			&SynchrotronConfig{
-				Url: "localhost:8008",
-				PIDFile: "/tmp/pid",
-			},
-		},
+		Synchrotrons: nil,
 		Balancer: &BalancerConfig{
 			RelocateThreashold: 3.0,
 			RelocateCounterThreashold: 4.5,

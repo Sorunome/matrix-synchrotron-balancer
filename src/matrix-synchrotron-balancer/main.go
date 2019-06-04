@@ -15,7 +15,7 @@ import (
 )
 
 type Synchrotron struct {
-	Url string
+	Address string
 	PIDFile string
 	Load float64
 	Users int
@@ -105,7 +105,7 @@ func handleConnection(conn net.Conn) {
 	}
 	synchIndex := getSynchrotron(mxid)
 	
-	rconn, err = net.Dial("tcp", synchrotrons[synchIndex].Url)
+	rconn, err = net.Dial("tcp", synchrotrons[synchIndex].Address)
 	if err != nil {
 		log.Print("Failed to connect to remote")
 		return
@@ -198,9 +198,13 @@ func main() {
 	tokenMxidCache = make(map[string]string)
 	synchrotronCache = make(map[string]int)
 
+	if config.Get().Synchrotrons == nil {
+		log.Panic("Please configure at least one synchrotron")
+	}
+
 	for _, synch := range config.Get().Synchrotrons {
 		synchrotrons = append(synchrotrons, &Synchrotron{
-			Url: synch.Url,
+			Address: synch.Address,
 			PIDFile: synch.PIDFile,
 			Load: 0,
 			Users: 0,
