@@ -31,7 +31,7 @@ var totalUsers = 0
 
 func getSynchrotron(mxid string) int {
 	if val, ok := synchrotronCache[mxid]; ok {
-		if synchrotrons[val].RelocateCounter < config.Get().Balancer.RelocateCounterThreshold {
+		if synchrotrons[val].RelocateCounter < config.Get().Balancer.RelocateCounterThreshold || synchrotrons[val].Users < 2 {
 			return val
 		}
 		// we need to relocate the user to another synchrotron
