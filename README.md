@@ -1,3 +1,5 @@
+[Support Chat](https://matrix.to/#/#matrix-synchrotron-balancer:sorunome.de) [![donate](https://liberapay.com/assets/widgets/donate.svg)](https://liberapay.com/Sorunome/donate)
+
 # matrix-synchrotron-balancer
 This is a load balancer for synapse synchrotron workers. As specified in the [docs](https://github.com/matrix-org/synapse/blob/master/docs/workers.rst#synapseappsynchrotron) it is best if each synchrotron handles one user. As such, this load balancer parses that. In addition it also does some basic logic to cycle users to other synchrotrons, if load is too high.
 
