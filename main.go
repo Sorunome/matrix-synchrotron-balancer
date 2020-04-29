@@ -1,24 +1,26 @@
 package main
 
 import (
-	"net"
-	"log"
-	"regexp"
-	"net/http"
-	"io/ioutil"
-	"encoding/json"
-	"matrix-synchrotron-balancer/config"
 	"bytes"
+	"encoding/json"
+	"io/ioutil"
+	"log"
+	"net"
+	"net/http"
+	"regexp"
 	"strconv"
 	"time"
+
 	"github.com/struCoder/pidusage"
+
+	"github.com/Sorunome/matrix-synchrotron-balancer/config"
 )
 
 type Synchrotron struct {
-	Address string
-	PIDFile string
-	Load float64
-	Users int
+	Address         string
+	PIDFile         string
+	Load            float64
+	Users           int
 	RelocateCounter float64
 }
 
@@ -37,7 +39,7 @@ func getSynchrotron(mxid string) int {
 		// we need to relocate the user to another synchrotron
 		synchrotrons[val].Users--
 		// estimate to how good our relocating is
-		synchrotrons[val].RelocateCounter -=  config.Get().Balancer.RelocateCooldown
+		synchrotrons[val].RelocateCounter -= config.Get().Balancer.RelocateCooldown
 	}
 	minLoad := 1000.0
 	i := 0
@@ -58,8 +60,8 @@ func getMxid(token []byte) string {
 		return val
 	}
 	log.Print("New first authorization token")
-	req, err := http.NewRequest("GET", config.Get().HomeserverUrl + "/_matrix/client/r0/account/whoami", nil)
-	req.Header.Add("Authorization", "Bearer " + sToken)
+	req, err := http.NewRequest("GET", config.Get().HomeserverUrl+"/_matrix/client/r0/account/whoami", nil)
+	req.Header.Add("Authorization", "Bearer "+sToken)
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
@@ -71,7 +73,7 @@ func getMxid(token []byte) string {
 	var m struct {
 		UserId string `json:"user_id"`
 	}
-	err = json.Unmarshal(body, &m);
+	err = json.Unmarshal(body, &m)
 	if err != nil {
 		log.Print("JSON decode error: ", err)
 		tokenMxidCache[sToken] = ""
@@ -84,9 +86,6 @@ func getMxid(token []byte) string {
 }
 
 func handleConnection(conn net.Conn) {
-	var rconn net.Conn
-	var err error
-	
 	// read out the first chunk to determine where to route to
 	buff := make([]byte, 65535)
 	n, err := conn.Read(buff)
@@ -105,15 +104,14 @@ func handleConnection(conn net.Conn) {
 		mxid = getMxid(token)
 	}
 	synchIndex := getSynchrotron(mxid)
-	
-	rconn, err = net.Dial("tcp", synchrotrons[synchIndex].Address)
+
+	rconn, err := net.Dial("tcp", synchrotrons[synchIndex].Address)
 	if err != nil {
 		log.Print("Failed to connect to remote")
 		conn.Close()
-		rconn.Close()
 		return
 	}
-	
+
 	// don't forget to send the first chunk!
 	_, err = rconn.Write(b)
 	if err != nil {
@@ -121,9 +119,9 @@ func handleConnection(conn net.Conn) {
 		rconn.Close()
 		return
 	}
-	
+
 	totalUsers++
-	
+
 	var pipe = func(src net.Conn, dst net.Conn) {
 		defer func() {
 			totalUsers--
@@ -209,10 +207,10 @@ func main() {
 
 	for _, synch := range config.Get().Synchrotrons {
 		synchrotrons = append(synchrotrons, &Synchrotron{
-			Address: synch.Address,
-			PIDFile: synch.PIDFile,
-			Load: 0,
-			Users: 0,
+			Address:         synch.Address,
+			PIDFile:         synch.PIDFile,
+			Load:            0,
+			Users:           0,
 			RelocateCounter: 0,
 		})
 	}
