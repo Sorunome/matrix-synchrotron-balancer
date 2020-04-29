@@ -9,12 +9,11 @@ This is a load balancer for synapse synchrotron workers. As specified in the [do
 ```bash
 git clone https://github.com/Sorunome/matrix-synchrotron-balancer
 cd matrix-synchrotron-balancer
-./install.sh
-GOPATH=$(pwd) go build src/matrix-synchrotron-balancer/main.go 
+go build
 ```
 ## Running
 ```bash
-./main
+./matrix-synchrotron-balancer
 ```
 ## Configuration
 An example file is in `config.sample.yaml`, copy that one to `config.yaml`. Edit it to your needs. Here are all the keys:

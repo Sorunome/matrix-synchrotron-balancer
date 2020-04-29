@@ -1,4 +1,2 @@
-pkg
-src/gopkg.in
-src/github.com
+matrix-synchrotron-balancer
 config.yaml
