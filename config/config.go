@@ -15,13 +15,13 @@ type SynchrotronConfig struct {
 type BalancerConfig struct {
 	RelocateThreshold        float64 `yaml:"relocate_threshold"`
 	RelocateCounterThreshold float64 `yaml:"relocate_counter_threshold"`
-	RelocateMinCpu           float64 `yaml:"relocate_min_cpu"`
+	RelocateMinCPU           float64 `yaml:"relocate_min_cpu"`
 	RelocateCooldown         float64 `yaml:"relocate_cooldown"`
 	Interval                 int     `yaml:"interval"`
 }
 
 type Config struct {
-	HomeserverUrl string               `yaml:"homeserver_url"`
+	HomeserverURL string               `yaml:"homeserver_url"`
 	Listener      string               `yaml:"listener"`
 	Synchrotrons  []*SynchrotronConfig `yaml:"synchrotrons"`
 	Balancer      *BalancerConfig      `yaml:"balancer"`
@@ -32,7 +32,7 @@ var Path = "config.yaml"
 
 func defaultConfig() *Config {
 	return &Config{
-		HomeserverUrl: "http://localhost:8008",
+		HomeserverURL: "http://localhost:8008",
 		Listener:      "localhost:8083",
 		Synchrotrons:  nil,
 		Balancer: &BalancerConfig{
@@ -40,7 +40,7 @@ func defaultConfig() *Config {
 			RelocateCounterThreshold: 4.5,
 			RelocateCooldown:         0.2,
 			Interval:                 2,
-			RelocateMinCpu:           10.0,
+			RelocateMinCPU:           10.0,
 		},
 	}
 }
