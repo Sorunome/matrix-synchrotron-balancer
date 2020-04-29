@@ -92,6 +92,8 @@ func getMXID(token string) string {
 func pipe(src net.Conn, dst net.Conn, wg *sync.WaitGroup) {
 	buff := make([]byte, 65535)
 	_, _ = io.CopyBuffer(dst, src, buff)
+	src.Close()
+	dst.Close()
 	wg.Done()
 }
 
