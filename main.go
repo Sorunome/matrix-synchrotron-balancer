@@ -3,14 +3,14 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"io"
+//	"io"
 	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
 	"regexp"
 	"strconv"
-	"sync"
+//	"sync"
 	"time"
 
 	"github.com/struCoder/pidusage"
@@ -89,18 +89,12 @@ func getMXID(token string) string {
 	return whoami.UserID
 }
 
-func pipe(src net.Conn, dst net.Conn, wg *sync.WaitGroup) {
-	buff := make([]byte, 65535)
-	_, _ = io.CopyBuffer(dst, src, buff)
-	wg.Done()
-}
-
 func handleConnection(conn net.Conn) {
-	defer conn.Close()
 	// read out the first chunk to determine where to route to
 	buff := make([]byte, 65535)
 	n, err := conn.Read(buff)
 	if err != nil {
+		conn.Close()
 		return
 	}
 
@@ -116,26 +110,42 @@ func handleConnection(conn net.Conn) {
 
 	rconn, err := net.Dial("tcp", getSynchrotron(mxid).Address)
 	if err != nil {
+		conn.Close()
 		log.Println("Failed to connect to remote")
 		return
 	}
-	defer rconn.Close()
 
 	// don't forget to send the first chunk!
 	_, err = rconn.Write(firstChunk)
 	if err != nil {
+		conn.Close()
+		rconn.Close()
 		return
 	}
 
-	var wg sync.WaitGroup
-	wg.Add(2)
 	totalUsers++
 
-	go pipe(conn, rconn, &wg)
-	go pipe(rconn, conn, &wg)
-
-	wg.Wait()
-	totalUsers--
+	var pipe = func(src net.Conn, dst net.Conn) {
+		defer func() {
+			totalUsers--
+			conn.Close()
+			rconn.Close()
+		}()
+		buff := make([]byte, 65535)
+		for {
+			n, err := src.Read(buff)
+			if err != nil {
+				return
+			}
+			b := buff[:n]
+			_, err = dst.Write(b)
+			if err != nil {
+				return
+			}
+		}
+	}
+	go pipe(conn, rconn)
+	go pipe(rconn, conn)
 }
 
 func updateLoads() {
